@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird Neural Network (Neuroevolution)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Top Control Bar -->
+    <header id="toolbar">
+      <div class="toolbar-group">
+        <div class="brand-title">
+          <span>Flappy Bird AI</span>
+          <span class="brand-badge">Neuroevolution</span>
+          <span id="save-status-badge" style="font-size: 11px; color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 7px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" title="Trained models are automatically preserved in browser storage">💾 Auto-Save Active</span>
+        </div>
+
+        <button id="btn-pause" class="btn" title="Toggle Play/Pause (P)">
+          <span id="pause-icon">⏸</span>
+          <span id="pause-text">Pause</span>
+        </button>
+
+        <button id="btn-nextgen" class="btn" title="Force trigger next generation (N)">
+          <span>⏭</span>
+          <span>Next Gen</span>
+        </button>
+
+        <button id="btn-restart" class="btn btn-danger" title="Restart simulation from Generation 1">
+          <span>🔄</span>
+          <span>Reset</span>
+        </button>
+      </div>
+
+      <div class="toolbar-group">
+        <!-- Speed Multipliers -->
+        <span style="font-size: 12px; color: #94a3b8; margin-right: 4px;">Speed:</span>
+        <div class="speed-group">
+          <button class="speed-btn active" data-speed="1">1x</button>
+          <button class="speed-btn" data-speed="2">2x</button>
+          <button class="speed-btn" data-speed="5">5x</button>
+          <button class="speed-btn" data-speed="10">10x</button>
+        </div>
+
+        <!-- Vision Rays Toggle -->
+        <button id="btn-vision" class="btn active" title="Toggle AI Sensory Vision Rays (V)">
+          <span>👁️</span>
+          <span>Vision Rays</span>
+        </button>
+
+        <!-- Layout Toggle (Bottom vs 3-Columns) -->
+        <button id="btn-layout" class="btn" title="Toggle Layout between Bottom Dock and 3-Columns (L)">
+          <span>◫</span>
+          <span id="layout-text">Layout: Bottom</span>
+        </button>
+
+        <!-- Human Play Mode -->
+        <button id="btn-human" class="btn" title="Play alongside the AI birds (Press Space to flap)">
+          <span>🎮</span>
+          <span>Play As Bird</span>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="btn-sound" class="btn" title="Toggle retro sound effects">
+          <span id="sound-icon">🔇</span>
+          <span id="sound-text">Sound Off</span>
+        </button>
+
+        <!-- Export/Import -->
+        <button id="btn-export" class="btn" title="Export or Import champion brain weights">
+          <span>💾</span>
+          <span>Weights</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main View with Embedded Game, Neural Networks, and Live Analytics -->
+    <main id="main-view" class="layout-bottom">
+      <div id="simulation-area">
+        <!-- Left: Flappy Bird Game Canvas -->
+        <section id="game-pane" class="pane">
+          <canvas id="game-canvas"></canvas>
+          <div class="helper-overlay">
+            <span>Click bird to inspect</span>
+            <span>•</span>
+            <span><span class="helper-key">V</span> vision rays</span>
+            <span>•</span>
+            <span><span class="helper-key">L</span> layout</span>
+            <span>•</span>
+            <span><span class="helper-key">Space</span> human flap</span>
+            <span>•</span>
+            <span><span class="helper-key">P</span> pause</span>
+          </div>
+        </section>
+
+        <!-- Right: Neural Network Visualizer Canvas -->
+        <section id="visualizer-pane" class="pane">
+          <canvas id="visualizer-canvas"></canvas>
+        </section>
+      </div>
+
+      <!-- Embedded Live Analytics Bar on the Main UI -->
+      <section id="analytics-pane">
+        <!-- Left: Live KPI Metrics -->
+        <div class="analytics-kpis">
+          <div class="kpi-card mini">
+            <span class="kpi-label">🏆 High Score</span>
+            <span class="kpi-value" id="main-kpi-high">0</span>
+          </div>
+          <div class="kpi-card mini">
+            <span class="kpi-label">🧬 Generation</span>
+            <span class="kpi-value" id="main-kpi-gen">1</span>
+          </div>
+          <div class="kpi-card mini">
+            <span class="kpi-label">🥇 Best Net</span>
+            <span class="kpi-value" id="main-kpi-lead" style="font-size: 14px;">—</span>
+          </div>
+          <div class="kpi-card mini">
+            <span class="kpi-label">📈 Growth</span>
+            <span class="kpi-value" id="main-kpi-growth" style="color: #34d399;">+0%</span>
+          </div>
+        </div>
+
+        <!-- Center Chart: Evolution Learning Curve -->
+        <div class="chart-container">
+          <div class="chart-title-bar">
+            <span>📈 Evolution Learning Curve</span>
+            <span class="chart-legend-tag"><span class="dot-green"></span> Max <span class="dot-cyan"></span> Avg</span>
+          </div>
+          <canvas id="main-chart-learning" class="main-chart-canvas"></canvas>
+        </div>
+
+        <!-- Right Chart: Species Competition -->
+        <div class="chart-container">
+          <div class="chart-title-bar">
+            <span>⚔️ Architecture Battle</span>
+            <span class="chart-legend-tag">4-4-1 vs 4-8-1 vs 4-16-1</span>
+          </div>
+          <canvas id="main-chart-species" class="main-chart-canvas"></canvas>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Weights Import / Export Modal -->
+  <div id="modal-weights" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Neural Network Weights</h3>
+        <button id="modal-close" class="modal-close">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+        Copy the exported JSON to save this generation's best bird, or paste weights to load a model:
+      </p>
+      <textarea id="weights-textarea" class="modal-textarea" spellcheck="false"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button id="btn-load-pretrained" class="btn" style="background: #065f46; border-color: #059669; color: #ecfdf5;" title="Load bundled pre-trained champion models for all 3 species">⚡ Load Pretrained Champions</button>
+        <button id="btn-load-weights" class="btn active">Load Custom Weights</button>
+        <button id="btn-close-modal" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/neural-network.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/pipe.js"></script>
+  <script src="js/bird.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/pretrained.js"></script>
+  <script src="js/game.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const gameCanvas = document.getElementById('game-canvas');
+      const visualizerCanvas = document.getElementById('visualizer-canvas');
+      const game = new FlappyGame(gameCanvas, visualizerCanvas);
+      game.start();
+
+      // UI Controls Binding
+      const btnPause = document.getElementById('btn-pause');
+      const pauseIcon = document.getElementById('pause-icon');
+      const pauseText = document.getElementById('pause-text');
+
+      btnPause.addEventListener('click', () => {
+        game.isPaused = !game.isPaused;
+        pauseIcon.textContent = game.isPaused ? '▶' : '⏸';
+        pauseText.textContent = game.isPaused ? 'Resume' : 'Pause';
+        btnPause.classList.toggle('active', game.isPaused);
+      });
+
+      const btnNextGen = document.getElementById('btn-nextgen');
+      btnNextGen.addEventListener('click', () => {
+        game.triggerNextGeneration();
+      });
+
+      const btnRestart = document.getElementById('btn-restart');
+      btnRestart.addEventListener('click', () => {
+        if (confirm('Restart simulation from Generation 1? This will also clear saved champions so you can train from scratch.')) {
+          game.resetAll();
+        }
+      });
+
+      // Speed selection
+      const speedButtons = document.querySelectorAll('.speed-btn');
+      speedButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          speedButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          game.speedMultiplier = parseInt(btn.dataset.speed, 10);
+        });
+      });
+
+      // Human play mode
+      const btnHuman = document.getElementById('btn-human');
+      btnHuman.addEventListener('click', () => {
+        const isHuman = game.toggleHumanMode();
+        btnHuman.classList.toggle('active', isHuman);
+      });
+
+      // Sound toggle
+      const btnSound = document.getElementById('btn-sound');
+      const soundIcon = document.getElementById('sound-icon');
+      const soundText = document.getElementById('sound-text');
+
+      btnSound.addEventListener('click', () => {
+        const isMuted = window.soundController.toggleMute();
+        soundIcon.textContent = isMuted ? '🔇' : '🔊';
+        soundText.textContent = isMuted ? 'Sound Off' : 'Sound On';
+        btnSound.classList.toggle('active', !isMuted);
+      });
+
+      // Weights modal
+      const modal = document.getElementById('modal-weights');
+      const btnExport = document.getElementById('btn-export');
+      const btnCloseModal = document.getElementById('btn-close-modal');
+      const modalClose = document.getElementById('modal-close');
+      const weightsTextarea = document.getElementById('weights-textarea');
+      const btnLoadWeights = document.getElementById('btn-load-weights');
+
+      btnExport.addEventListener('click', () => {
+        const bestBird = game.populations[0][0];
+        if (bestBird && bestBird.brain) {
+          weightsTextarea.value = JSON.stringify(bestBird.brain.toJSON(), null, 2);
+        }
+        modal.classList.add('open');
+      });
+
+      const closeModal = () => modal.classList.remove('open');
+      btnCloseModal.addEventListener('click', closeModal);
+      modalClose.addEventListener('click', closeModal);
+
+      btnLoadWeights.addEventListener('click', () => {
+        try {
+          const data = JSON.parse(weightsTextarea.value);
+          const loadedBrain = NeuralNetwork.fromJSON(data);
+          game.populations[0].forEach(b => {
+            b.brain = loadedBrain.clone();
+          });
+          alert('Weights successfully applied to 4-4-1 species!');
+          closeModal();
+        } catch (e) {
+          alert('Invalid JSON weights data: ' + e.message);
+        }
+      });
+
+      const btnLoadPretrained = document.getElementById('btn-load-pretrained');
+      if (btnLoadPretrained) {
+        btnLoadPretrained.addEventListener('click', () => {
+          if (window.PRETRAINED_MODELS) {
+            game.loadPretrained(window.PRETRAINED_MODELS);
+            game.saveToStorage();
+            updateMainAnalytics();
+            alert('Loaded pre-trained champion models for all 3 species (Score: 52)!');
+            closeModal();
+          }
+        });
+      }
+
+      // Vision Rays Toggle
+      const btnVision = document.getElementById('btn-vision');
+      btnVision.addEventListener('click', () => {
+        const isEnabled = game.toggleVisionRays();
+        btnVision.classList.toggle('active', isEnabled);
+      });
+
+      // Main UI Analytics Engine
+      const mainChartLearning = document.getElementById('main-chart-learning');
+      const mainChartSpecies = document.getElementById('main-chart-species');
+
+      const kpiHigh = document.getElementById('main-kpi-high');
+      const kpiGen = document.getElementById('main-kpi-gen');
+      const kpiLead = document.getElementById('main-kpi-lead');
+      const kpiGrowth = document.getElementById('main-kpi-growth');
+
+      const updateMainAnalytics = () => {
+        const summary = game.analytics.getSummary();
+        if (kpiHigh) kpiHigh.textContent = Math.max(game.maxPoints, summary.allTimeHigh);
+        if (kpiGen) kpiGen.textContent = game.generation;
+        if (kpiLead) {
+          kpiLead.textContent = summary.bestSpeciesName + ' Net';
+          kpiLead.style.color = summary.bestSpeciesColor;
+        }
+        if (kpiGrowth) {
+          kpiGrowth.textContent = `${summary.growthRate >= 0 ? '+' : ''}${summary.growthRate}%`;
+          kpiGrowth.style.color = summary.growthRate >= 0 ? '#34d399' : '#f87171';
+        }
+
+        // Render charts to main canvases
+        if (mainChartLearning && mainChartSpecies) {
+          game.analytics.renderLearningChart(mainChartLearning);
+          game.analytics.renderSpeciesChart(mainChartSpecies);
+        }
+      };
+
+      // Connect game hook to update analytics live after every generation
+      game.onAnalyticsUpdate = updateMainAnalytics;
+
+      // Layout Toggle (Bottom vs 3-Columns)
+      const mainView = document.getElementById('main-view');
+      const btnLayout = document.getElementById('btn-layout');
+      const layoutText = document.getElementById('layout-text');
+
+      btnLayout.addEventListener('click', () => {
+        const isBottom = mainView.classList.contains('layout-bottom');
+        if (isBottom) {
+          mainView.classList.remove('layout-bottom');
+          mainView.classList.add('layout-columns');
+          layoutText.textContent = 'Layout: 3-Col';
+        } else {
+          mainView.classList.remove('layout-columns');
+          mainView.classList.add('layout-bottom');
+          layoutText.textContent = 'Layout: Bottom';
+        }
+        setTimeout(() => {
+          game.resize();
+          updateMainAnalytics();
+        }, 50);
+      });
+
+      // Window resize also updates charts
+      window.addEventListener('resize', () => {
+        updateMainAnalytics();
+      });
+
+      // Initial render on load
+      setTimeout(() => {
+        updateMainAnalytics();
+      }, 100);
+
+      // Global keyboard shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        if (e.code === 'KeyP') {
+          btnPause.click();
+        } else if (e.code === 'KeyN') {
+          btnNextGen.click();
+        } else if (e.code === 'KeyV') {
+          btnVision.click();
+        } else if (e.code === 'KeyL') {
+          btnLayout.click();
+        } else if (e.code === 'Digit1') {
+          speedButtons[0].click();
+        } else if (e.code === 'Digit2') {
+          speedButtons[1].click();
+        } else if (e.code === 'Digit3') {
+          speedButtons[2].click();
+        } else if (e.code === 'Digit4') {
+          speedButtons[3].click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
