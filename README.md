@@ -18,58 +18,44 @@
 The entire simulation, inference, visualization, and evolutionary engine runs locally in the client browser with optional local hosting via Python:
 
 ```mermaid
-flowchart TB
-    subgraph ENVIRONMENT["🎮 Game Simulation Environment (HTML5 Canvas)"]
-        BIRDS["🕊️ Multi-Species Bird Populations (90 Parallel Agents)"]
-        PIPES["🏛️ Architectural Tower Obstacles (Randomized Gaps)"]
-        SENSORS["👁️ AI Vision Rays (Top, Bottom & Center Reticles)"]
-        PHYSICS["⚙️ Physics Engine (Gravity: 0.38 · Jump Lift: -7.2)"]
-        BIRDS -->|"Collision & Boundary Checking"| PIPES
-        BIRDS -->|"Emits Spatial Coordinates"| SENSORS
-        PHYSICS -->|"Updates Trajectory & Velocity"| BIRDS
+flowchart LR
+    subgraph GAME["🎮 1. Game Simulation"]
+        direction TB
+        BIRDS["🕊️ 90 Birds (3 Species)"]
+        RAYS["👁️ AI Vision Rays"]
+        PIPES["🏛️ Pipe Obstacles"]
+        BIRDS --> RAYS
+        RAYS -.-> PIPES
     end
 
-    subgraph BRAIN["🧠 Deep Neuroevolution Engine (Pure JavaScript)"]
-        INPUTS["📥 Normalized Inputs (bird_y, pipe_x, gap_top, gap_bottom)"]
-        ARCHS["🧩 3 Competing Topologies (4-4-1 · 4-8-1 · 4-16-1)"]
-        HIDDEN["⚡ Hidden Layers with Dynamic Bias Rings (Sigmoid)"]
-        OUTPUT["🎯 Decision Neuron (flap ≥ 0.50 | wait < 0.50)"]
-        INPUTS --> ARCHS
-        ARCHS --> HIDDEN
-        HIDDEN --> OUTPUT
+    subgraph BRAIN["🧠 2. Neural Network"]
+        direction TB
+        INPUTS["📥 4 Inputs (Altitude & Distance)"]
+        HIDDEN["⚡ Hidden Layers (4 / 8 / 16 Nodes)"]
+        ACTION["🎯 Decision (Flap or Wait)"]
+        INPUTS --> HIDDEN --> ACTION
     end
 
-    subgraph GENETICS["🧬 Genetic Evolution Pipeline (Natural Selection)"]
-        FITNESS["📊 Fitness Evaluation (Survival Duration + Gap Center Proximity)"]
-        ELITISM["👑 Elitism Preservation (Top Champions Kept Unaltered)"]
-        SELECTION["🎲 Tournament Selection (Fitness-Proportionate Breeding)"]
-        MUTATION["⚡ Gaussian Weight Mutation (Rate: 12% · Perturbation: ±0.45)"]
-        FITNESS --> ELITISM
-        FITNESS --> SELECTION
-        SELECTION --> MUTATION
-        MUTATION -->|"Spawns Mutated Offspring Generation"| ARCHS
+    subgraph EVOLUTION["🧬 3. Evolution Loop"]
+        direction TB
+        EVAL["📊 Evaluate Survival Fitness"]
+        CHAMP["👑 Preserve Champions (Elitism)"]
+        MUTATE["⚡ Mutate Weights (Yellow Synapses)"]
+        EVAL --> CHAMP --> MUTATE
     end
 
-    subgraph TELEMETRY["📊 Embedded Main-UI Analytics & Telemetry"]
-        VISUALIZER["🕸️ Neural Network Visualizer (Green: +, Red: -, Yellow: Mutated)"]
-        KPIS["🏆 Live KPI Cards (High Score, Gen, Leading Arch, Growth %)"]
-        LEARNING_CHART["📈 Evolution Learning Curve (Max & Avg Score vs Gen)"]
-        BATTLE_CHART["⚔️ Architecture Benchmark (4-4-1 vs 4-8-1 vs 4-16-1)"]
+    subgraph DASHBOARD["📊 4. Live Dashboard"]
+        direction TB
+        VIZ["🕸️ Synapse Inspector"]
+        CHARTS["📈 Real-Time Charts & KPIs"]
     end
 
-    subgraph STORAGE["💾 Storage & Pre-Trained Models"]
-        LOCAL_STORAGE["Browser LocalStorage (Auto-Save on Generation End)"]
-        PRETRAINED_JSON["models/pretrained_models.json (Bundled 52+ Score Champions)"]
-    end
-
-    SENSORS -->|"Feeds Real-Time Telemetry [0.0 - 1.0]"| INPUTS
-    OUTPUT -->|"Triggers Flap Impulse"| PHYSICS
-    BIRDS -->|"All Birds Crash"| FITNESS
-    ARCHS -->|"Renders Real-Time Synapses"| VISUALIZER
-    FITNESS -->|"Logs Epoch Data"| TELEMETRY
-    ELITISM -->|"Auto-Saves Champions"| LOCAL_STORAGE
-    PRETRAINED_JSON -->|"Instant Out-Of-The-Box Flight"| ARCHS
-    LOCAL_STORAGE -->|"Restores Saved Generations"| ARCHS
+    GAME -->|"Distances & Heights"| BRAIN
+    BRAIN -->|"Flap Actions"| GAME
+    GAME -->|"When Birds Crash"| EVOLUTION
+    EVOLUTION -->|"Spawns Next Generation"| GAME
+    BRAIN -.-> VIZ
+    EVOLUTION -.-> CHARTS
 ```
 
 ---
