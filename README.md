@@ -9,6 +9,8 @@
 
 > An interactive, 100% self-contained **Neuroevolution AI Sandbox** where artificial neural networks learn to master Flappy Bird through Darwinian natural selection in real time. Features multi-species competition, live synaptic weight inspection, sensory vision radar rays, and embedded performance analytics with zero external libraries or cloud dependencies.
 
+<img width="1896" height="905" alt="image" src="https://github.com/user-attachments/assets/20b957ba-8b8a-4eb4-afe0-deabc5a261f9" />
+
 ---
 
 ## 🏗️ System Architecture & Workflow
